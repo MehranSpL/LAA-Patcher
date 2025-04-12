@@ -1,2 +1,4 @@
 # LAA-Patcher
 A New LAA (Large Address Aware) Patcher using ImGui
+
+Remember to close the process first, then use
