@@ -8,6 +8,8 @@
 
 #pragma comment(lib, "d3d9.lib")
 
+extern ImFont* MainFont;
+
 LPDIRECT3D9              g_pD3D = NULL;
 LPDIRECT3DDEVICE9        g_pd3dDevice = NULL;
 D3DPRESENT_PARAMETERS    g_d3dpp = {};
@@ -49,8 +51,8 @@ LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow) {
     WNDCLASSEX wc = { sizeof(WNDCLASSEX), CS_CLASSDC, WndProc, 0L, 0L, GetModuleHandleA(0), 0, 0, 0, 0, "Not an ImGuiWindow", 0 };
     RegisterClassEx(&wc);
-    int windowWidth = 400;
-    int windowHeight = 350;
+    int windowWidth = 520;
+    int windowHeight = 420;
     int screenWidth = GetSystemMetrics(SM_CXSCREEN);
     int screenHeight = GetSystemMetrics(SM_CYSCREEN);
     int x = (screenWidth - windowWidth) / 2;
@@ -58,6 +60,18 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
 
     g_hWnd = CreateWindowW(L"Not an ImGuiWindow", L"Slap's LAA Patcher", WS_POPUP | WS_VISIBLE, x, y, windowWidth, windowHeight, 0, 0, wc.hInstance, 0);
 
+    HRGN region = CreateRoundRectRgn(
+        0,
+        0,
+        windowWidth + 1,
+        windowHeight + 1,
+        35,
+        35);
+
+    SetWindowRgn(
+        g_hWnd,
+        region,
+        TRUE);
 
     SetWindowLong(g_hWnd, GWL_STYLE, GetWindowLong(g_hWnd, GWL_STYLE) & ~WS_SIZEBOX & ~WS_MAXIMIZEBOX);
     SetWindowPos(g_hWnd, NULL, x, y, windowWidth, windowHeight, SWP_NOZORDER | SWP_FRAMECHANGED);
@@ -73,7 +87,8 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
     ImGuiIO& io = ImGui::GetIO(); (void)io;
-    ImGui::StyleColorsDark();
+    SetupStyles();
+    ImGui::StyleColorsClassic();
     ImGui_ImplWin32_Init(g_hWnd);
     ImGui_ImplDX9_Init(g_pd3dDevice);
 

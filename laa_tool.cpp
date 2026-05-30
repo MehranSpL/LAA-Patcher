@@ -1,7 +1,11 @@
 #include "laa_tool.h"
 
+std::string selectedFile;
 bool isLAASet = false;
-std::string selectedFile = "";
+
+float g_StatusFade = 0.0f;
+std::string g_StatusMessage = "No executable selected, select one first to check the status";
+bool g_StatusSuccess = false;
 
 bool GetBackup(const std::string& originalFilePath) {
     size_t lastSlashPos = originalFilePath.find_last_of("\\/");
@@ -84,88 +88,173 @@ std::string OpenFileDialog() {
     return "";
 }
 
-void CenterWindow(ImGuiViewport* viewport) {
-    ImVec2 centerPos = ImVec2((viewport->WorkPos.x + viewport->WorkSize.x) / 2.0f,
-        (viewport->WorkPos.y + viewport->WorkSize.y) / 2.0f);
-    ImGui::SetNextWindowPos(centerPos, ImGuiCond_Always, ImVec2(0.5f, 0.5f));
-}
 
-void CreateCenterText(const char* Text, float Red = 1.0f, float Green = 1.0f, float Blue = 1.0f, float Transparency = 1.0f, float alignment = 0.5f) {
-    ImGuiStyle& style = ImGui::GetStyle();
 
-    float size = ImGui::CalcTextSize(Text).x + style.FramePadding.x * 2.0f;
-    float avail = ImGui::GetContentRegionAvail().x;
+void ShowLAAImGuiWindow()
+{
+    ImGuiIO& io = ImGui::GetIO();
 
-    float off = (avail - size) * alignment;
-    if (off > 0.0f)
-        ImGui::SetCursorPosX(ImGui::GetCursorPosX() + off);
+    g_StatusFade += io.DeltaTime * 4.0f;
+    if (g_StatusFade > 1.0f)
+        g_StatusFade = 1.0f;
 
-    return ImGui::TextColored(ImVec4(Red, Green, Blue, Transparency), Text);
-}
+    ImGui::SetNextWindowPos(ImVec2(0, 0));
+    ImGui::SetNextWindowSize(io.DisplaySize);
 
-bool CreateCenterButton(const char* Text, float Red = 1.0f, float Green = 1.0f, float Blue = 1.0f, float Transparency = 1.0f, float alignment = 0.5f) {
-    ImGuiStyle& style = ImGui::GetStyle();
+    ImGui::Begin(
+        "Main",
+        nullptr,
+        ImGuiWindowFlags_NoDecoration |
+        ImGuiWindowFlags_NoMove |
+        ImGuiWindowFlags_NoResize);
 
-    float size = ImGui::CalcTextSize(Text).x + style.FramePadding.x * 2.0f;
-    float avail = ImGui::GetContentRegionAvail().x;
+    ImGui::Text("\nSlap's LAA Patcher");
 
-    float off = (avail - size) * alignment;
-    if (off > 0.0f)
-        ImGui::SetCursorPosX(ImGui::GetCursorPosX() + off);
+    ImGui::SameLine(
+        ImGui::GetWindowWidth() - 50);
 
-    ImVec4 color(Red, Green, Blue, Transparency);
+    if (ImGui::Button("X"))
+    {
+        PostQuitMessage(0);
+    }
 
-    ImGui::PushStyleColor(ImGuiCol_Button, color);
-    bool result = ImGui::Button(Text);
-    ImGui::PopStyleColor();
+    ImGui::Separator();
 
-    return result;
-}
+    ImGui::BeginChild("FileCard",
+        ImVec2(0, 110),
+        true);
 
-void ShowLAAImGuiWindow() {
-    ImGui::GetIO().IniFilename = nullptr;
-    ImGuiViewport* viewport = ImGui::GetMainViewport();
-    CenterWindow(viewport);
-    ImGui::SetNextWindowPos(viewport->Pos);
-    ImGui::SetNextWindowSize(viewport->Size);
-    ImGui::SetNextWindowViewport(viewport->ID);
-    ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoDocking | ImGuiWindowFlags_NoTitleBar |
-        ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize |
-        ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus;
-    ImGui::Begin("DockSpaceWindow", nullptr, window_flags);
-    ImGuiID dockspace_id = ImGui::GetID("MainDockSpace");
-    ImGui::DockSpace(dockspace_id, ImVec2(0.0f, 0.0f), ImGuiDockNodeFlags_None);
-    CenterWindow(viewport);
-    CreateCenterText("");
-    CreateCenterText("Slap's LAA Patcher");
-    CreateCenterText("This is the GitHub uploaded version");
-    CreateCenterText("");
-    CreateCenterText("Hi, this is a Miracle");
-    CreateCenterText("With this app, you can get rid of too many errors");
-    CreateCenterText("Such as Visual C++ Runtime errors, select a file first");
-    CreateCenterText("Enjoy!");
-    if (CreateCenterButton("Select a .exe File", 1.0f, 0.0f, 1.0f, 0.5f)) {
+    ImGui::Text("Executable:");
+
+    if (selectedFile.empty())
+    {
+        ImGui::TextDisabled(
+            "No executable selected");
+    }
+    else
+    {
+        size_t pos =
+            selectedFile.find_last_of("/\\");
+
+        std::string name =
+            selectedFile.substr(pos + 1);
+
+        ImGui::TextWrapped("%s",
+            name.c_str());
+    }
+
+    ImGui::Spacing();
+
+    if (ImGui::Button(
+        "Browse for Executable",
+        ImVec2(-1, 40)))
+    {
         selectedFile = OpenFileDialog();
-        if (!selectedFile.empty()) {
-            bool dummy = false;
-            CheckAndSetLAA(selectedFile, false, isLAASet);
+
+        if (!selectedFile.empty())
+        {
+            CheckAndSetLAA(
+                selectedFile,
+                false,
+                isLAASet);
+
+            g_StatusFade = 0.0f;
+
+            g_StatusSuccess = isLAASet;
+
+            g_StatusMessage =
+                isLAASet ?
+                "Large Address Aware is enabled"
+                :
+                "Large Address Aware is disabled";
         }
     }
 
-    if (!selectedFile.empty()) {
-        size_t pos = selectedFile.find_last_of("/\\");
-        std::string fileName = (pos != std::string::npos) ? selectedFile.substr(pos + 1) : selectedFile;
-        std::string selectedLabel = "Currently selected file: " + fileName;
-        std::string statusLabel = "LAA Status: " + std::string(isLAASet ? "Enabled" : "Disabled");
-        CreateCenterText(selectedLabel.c_str(), 0.0f, 0.72f, 0.9f, 1.0f);
-        CreateCenterText(statusLabel.c_str(), 0.0f, 0.72f, 0.9f, 1.0f);
+    ImGui::EndChild();
 
-        if (!isLAASet && CreateCenterButton("Enable LAA on the selected Executable", 0.0f, 1.0f, 0.0f, 0.5f)) {
-            bool dummy;
-            CheckAndSetLAA(selectedFile, true, dummy);
-            isLAASet = true;
+    ImGui::Spacing();
+
+    ImGui::BeginChild(
+        "StatusCard",
+        ImVec2(0, 90),
+        true);
+
+    ImVec4 color =
+        g_StatusSuccess ?
+        ImVec4(0.2f, 1.0f, 0.3f, g_StatusFade)
+        :
+        ImVec4(1.0f, 0.35f, 0.35f, g_StatusFade);
+
+    ImGui::TextColored(
+        color,
+        "%s",
+        g_StatusSuccess ?
+        "[+] | Enabled "
+        :
+        "[-] | Disabled");
+
+    ImGui::Spacing();
+
+    ImGui::TextColored(
+        ImVec4(1, 1, 1, g_StatusFade),
+        "%s",
+        g_StatusMessage.c_str());
+
+    ImGui::EndChild();
+
+    ImGui::Spacing();
+
+    ImGui::BeginChild(
+        "ActionCard",
+        ImVec2(0, 90),
+        true);
+
+    ImGui::Text("Actions:");
+
+    ImGui::Spacing();
+
+    if (!selectedFile.empty())
+    {
+        if (!isLAASet)
+        {
+            if (ImGui::Button(
+                "Enable Large Address Aware",
+                ImVec2(-1, 40)))
+            {
+                bool dummy;
+
+                CheckAndSetLAA(
+                    selectedFile,
+                    true,
+                    dummy);
+
+                isLAASet = true;
+
+                g_StatusFade = 0.0f;
+
+                g_StatusSuccess = true;
+
+                g_StatusMessage =
+                    "Successfully enabled LAA on selected executable!";
+            }
+        }
+        else
+        {
+            ImGui::BeginDisabled();
+
+            ImGui::Button(
+                "Already Enabled",
+                ImVec2(-1, 40));
+
+            ImGui::EndDisabled();
         }
     }
+
+    else {
+        ImGui::TextDisabled("Select something first dude");
+    }
+
+    ImGui::EndChild();
 
     ImGui::End();
 }
