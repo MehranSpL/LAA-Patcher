@@ -6,6 +6,8 @@
 #include <tchar.h>
 #include "laa_tool.h"
 
+#pragma comment(lib, "d3d9.lib")
+
 LPDIRECT3D9              g_pD3D = NULL;
 LPDIRECT3DDEVICE9        g_pd3dDevice = NULL;
 D3DPRESENT_PARAMETERS    g_d3dpp = {};
@@ -45,7 +47,7 @@ LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
 
 int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow) {
-    WNDCLASSEX wc = { sizeof(WNDCLASSEX), CS_CLASSDC, WndProc, 0L, 0L, GetModuleHandle(0), 0, 0, 0, 0, L"Not an ImGuiWindow", 0 };
+    WNDCLASSEX wc = { sizeof(WNDCLASSEX), CS_CLASSDC, WndProc, 0L, 0L, GetModuleHandleA(0), 0, 0, 0, 0, "Not an ImGuiWindow", 0 };
     RegisterClassEx(&wc);
     int windowWidth = 400;
     int windowHeight = 350;
@@ -54,7 +56,7 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
     int x = (screenWidth - windowWidth) / 2;
     int y = (screenHeight - windowHeight) / 2;
 
-    g_hWnd = CreateWindow(L"Not an ImGuiWindow", L"Slap's LAA Patcher", WS_POPUP | WS_VISIBLE, x, y, windowWidth, windowHeight, 0, 0, wc.hInstance, 0);
+    g_hWnd = CreateWindowW(L"Not an ImGuiWindow", L"Slap's LAA Patcher", WS_POPUP | WS_VISIBLE, x, y, windowWidth, windowHeight, 0, 0, wc.hInstance, 0);
 
 
     SetWindowLong(g_hWnd, GWL_STYLE, GetWindowLong(g_hWnd, GWL_STYLE) & ~WS_SIZEBOX & ~WS_MAXIMIZEBOX);

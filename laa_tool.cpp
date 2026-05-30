@@ -1,8 +1,4 @@
-#include "imgui\imgui.h"
-#include <Windows.h>
-#include <fstream>
-#include <shobjidl.h>
-#include <string>
+#include "laa_tool.h"
 
 bool isLAASet = false;
 std::string selectedFile = "";
