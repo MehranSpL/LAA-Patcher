@@ -38,4 +38,4 @@ Bug reports, feature suggestions, and contributions are always welcome.
 ## Credits
 
 * Dear ImGui by ocornut
-* UI design inspiration by @lbyenjoyer (Design for Older Versions)
+* UI design inspiration by [@lbyenjoyer](https://github.com/lbyenjoyer) (Design for Older Versions)
